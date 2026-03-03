@@ -34,21 +34,13 @@ public class SecurityConfig {
                 .addFilterBefore(sessionAuthFilter, AnonymousAuthenticationFilter.class)
 
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ NOUVEAU — Routes publiques sans session
                         .requestMatchers("/api/public/**").permitAll()
-
-                        // 🔓 Auth publique
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/logout").permitAll()
                         .requestMatchers("/api/admin/login").permitAll()
                         .requestMatchers("/api/admin/logout").permitAll()
-
-                        // 🔒 Admin uniquement
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // 🔒 Client authentifié
                         .requestMatchers("/api/client/**").authenticated()
-
                         .anyRequest().denyAll()
                 )
 
@@ -60,8 +52,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, e) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.getWriter().write(
-                                    "{\"error\": \"Non authentifié. Veuillez vous connecter.\"}");
+                            response.getWriter().write("{\"error\": \"Non authentifié. Veuillez vous connecter.\"}");
                         })
                         .accessDeniedHandler((request, response, e) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -79,10 +70,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
+
+        // ✅ localhost pour développement + Vercel pour production
+        config.setAllowedOrigins(List.of(
+                "http://localhost:4200",
+                "https://frontend-gab.vercel.app",
+                "https://frontend-gab-ghlanabdk.vercel.app"
+        ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
