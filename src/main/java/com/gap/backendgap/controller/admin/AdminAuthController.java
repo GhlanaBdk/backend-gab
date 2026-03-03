@@ -1,15 +1,17 @@
 package com.gap.backendgap.controller.admin;
 
+import com.gap.backendgap.config.SessionAuthFilter;
 import com.gap.backendgap.service.admin.AdminAuthService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 public class AdminAuthController {
 
     private final AdminAuthService adminAuthService;
@@ -18,21 +20,37 @@ public class AdminAuthController {
         this.adminAuthService = adminAuthService;
     }
 
-    // POST /api/admin/login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String username,
-                                   @RequestParam String password,
-                                   HttpSession session) {
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestParam String username,
+            @RequestParam String password,
+            HttpSession session) {
+
         adminAuthService.login(username, password);
         session.setAttribute("ADMIN_AUTH", true);
-        session.setAttribute("role", "ADMIN");
-        return ResponseEntity.ok(Map.of("message", "Admin login successful"));
+
+        // ✅ Génère token pour mobile
+        String token = UUID.randomUUID().toString();
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("ADMIN_AUTH", true);
+        SessionAuthFilter.tokenStore.put(token, sessionData);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Admin login successful");
+        response.put("token", token);
+        return ResponseEntity.ok(response);
     }
 
-    // POST /api/admin/logout
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpSession session) {
+    public ResponseEntity<Map<String, Object>> logout(
+            HttpSession session,
+            @RequestHeader(value = "X-Auth-Token", required = false) String token) {
+
         session.invalidate();
-        return ResponseEntity.ok(Map.of("message", "Logged out"));
+        if (token != null) SessionAuthFilter.tokenStore.remove(token);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Logged out");
+        return ResponseEntity.ok(response);
     }
 }
