@@ -74,8 +74,7 @@ public class SecurityConfig {
         // ✅ localhost pour développement + Vercel pour production
         config.setAllowedOrigins(List.of(
                 "http://localhost:4200",
-                "https://frontend-gab.vercel.app",
-                "https://frontend-gab-ghlanabdk.vercel.app"
+                "https://frontend-gab-three.vercel.app"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
